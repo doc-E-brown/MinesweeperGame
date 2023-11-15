@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c243b87c6c156b97d871491b7118d0c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numberOfMines: 3
+  numberOfMines: 1
   boardSize: 3
   randomSeed: 0
-  TilePrefab: {fileID: 3832571950403076260, guid: fd2ec108b84305236b780a06e6e0c662, type: 3}
+  tilePrefab: {fileID: 3832571950403076260, guid: fd2ec108b84305236b780a06e6e0c662, type: 3}

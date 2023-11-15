@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class BoardController : MonoBehaviour
@@ -10,10 +11,14 @@ public class BoardController : MonoBehaviour
     public int boardSize = 9;
     public int randomSeed = 0;
     
-    // private GameObject _tileParent;
-    public GameObject TilePrefab;
+    [FormerlySerializedAs("TilePrefab")] public GameObject tilePrefab;
 
     private List<List<Tile>> _tileMap;
+
+    public List<List<Tile>> TileMap()
+    {
+        return _tileMap;
+    }
     
     void Start()
     {
@@ -33,9 +38,10 @@ public class BoardController : MonoBehaviour
             List<Tile> row = new List<Tile>();
             for (int x = 0; x < boardSize; x++)
             {
-                GameObject newTile = Instantiate(TilePrefab, Tile.GetTilePosition(x, y, new Vector3(2, 2, 1)),
+                GameObject newTile = Instantiate(tilePrefab, Tile.GetTilePosition(x, y, new Vector3(2, 2, 1)),
                     Quaternion.identity, transform);
                 Tile tile = newTile.GetComponent<Tile>();
+                tile.Controller = this;
                 tile.x = x;
                 tile.y = y;
                 tile.makeClear();
@@ -58,22 +64,25 @@ public class BoardController : MonoBehaviour
          {
              foreach (var cell in row)
              {
+                 if (!cell.isMine)
+                 {
                  ComputeTileScore(cell);
+                 }
              }
          }       
     }
 
     public void ComputeTileScore(Tile location)
     {
-        int score = 0;
-        int xmin = Math.Clamp(location.x - 1, 0, boardSize - 1);
-        int xmax = Math.Clamp(location.x + 1, 0, boardSize - 1);
-        int ymin = Math.Clamp(location.y - 1, 0, boardSize - 1);
-        int ymax = Math.Clamp(location.y + 1, 0, boardSize - 1);
+        var score = 0;
+        var xMin = Math.Clamp(location.x - 1, 0, boardSize - 1);
+        var xMax = Math.Clamp(location.x + 1, 0, boardSize - 1);
+        var yMin = Math.Clamp(location.y - 1, 0, boardSize - 1);
+        var yMax = Math.Clamp(location.y + 1, 0, boardSize - 1);
         
-        for (int i = ymin; i <= ymax; i++)
+        for (int i = yMin; i <= yMax; i++)
         {
-            for (int j = xmin; j <= xmax; j++)
+            for (int j = xMin; j <= xMax; j++)
             {
                 Tile target = GetTile(j, i);
                 if (target != location && target.isMine)
@@ -83,7 +92,7 @@ public class BoardController : MonoBehaviour
             }
         }
 
-        location.Value = score;
+        location.SetValue(score);
     }
 
     public Tile GetTile(int x, int y)
@@ -107,7 +116,7 @@ public class BoardController : MonoBehaviour
                 mineLocations.Add(pos);
                 Tile tile = GetTile(xPos, yPos);
                 tile.makeMine();
-                // Debug.Log($"Mine location: {xPos}, {yPos}");
+                Debug.Log($"Mine location: {xPos}, {yPos}");
             }
 
         }

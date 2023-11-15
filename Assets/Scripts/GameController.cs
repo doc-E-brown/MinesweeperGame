@@ -1,14 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using Codice.Client.BaseCommands;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class GameController : MonoBehaviour
 {
     public static GameController Instance;
     public int numberOfTilesClicked = 0;
-    public GameObject BoardPrefab;
+    
+    [FormerlySerializedAs("BoardPrefab")] public GameObject boardPrefab;
 
     private BoardController _boardController;
+
+    private bool _gameOver;
+    public bool isRunning = false;
+    
+    
+    [FormerlySerializedAs("label")] public TextMeshProUGUI timer;
+    private float _runTime;
+
     
     private void Awake()
     {
@@ -18,12 +30,18 @@ public class GameController : MonoBehaviour
             return;
         }
         Instance = this;
+        isRunning = false;
+        timer.text = "00.00s";
         NewGame();
     }
-
-    public bool isFirstClick()
+    
+    void Update()
     {
-        return numberOfTilesClicked == 0;
+        if (GameController.Instance.isRunning)
+        {
+            _runTime += Time.deltaTime;
+            timer.text = $"{_runTime:00.00}s";
+        }
     }
 
     public void RegisterClick(Tile location)
@@ -32,6 +50,7 @@ public class GameController : MonoBehaviour
         // it needs to be a 'safe' click
         if (numberOfTilesClicked == 0)
         {
+            _boardController.GenerateMap(location);
         }
         numberOfTilesClicked++;
     }
@@ -39,21 +58,49 @@ public class GameController : MonoBehaviour
     public void NewGame()
     {
         numberOfTilesClicked = 0;
-        GameObject _board = Instantiate(BoardPrefab);
+        _gameOver = false;
+        isRunning = !_gameOver;
+        
+        GameObject _board = Instantiate(boardPrefab);
 
         _boardController = _board.GetComponent<BoardController>();
         _boardController.NewGame();
     }
-    
-    // Start is called before the first frame update
-    void Start()
+
+    public bool IsGameFinished()
     {
+        if (_gameOver)
+        {
+            return true;
+        }
+        var tileMap = _boardController.TileMap();
+        foreach (var row in tileMap)
+        {
+            foreach (var tile in row)
+            {
+                // The tile is not a mine and it isnt revealed
+                // unclicked blank tiles are ok 
+                if (!tile.isMine && !tile.isRevealed && !tile.isBlank)
+                {
+                    Debug.Log("Game is continuing");
+                    isRunning = true;
+                    return false;
+                }
+            }
+        }
         
+        // If we have reached this far the game is over and the player won
+        Debug.Log("Game is over, you won!");
+        isRunning = false;
+        return true;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void LoseGame()
     {
-        
+        Debug.Log("Game is lost");
+        _gameOver = true;
+        isRunning = !_gameOver;
+
     }
+    
 }
